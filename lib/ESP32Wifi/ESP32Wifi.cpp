@@ -13,10 +13,13 @@ void WifiInit()
 
         WiFi.begin(ssids[i], passwords[i]);
         unsigned long startAttemptTime = millis();
+        unsigned long lastDotPrintTime = 0;
 
         while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_TIMEOUT_MS) {
-            delay(500);
-            Serial.println(".");
+            if (millis() - lastDotPrintTime >= 500) {
+                Serial.print(".");
+                lastDotPrintTime = millis();
+            }
         }
 
         if (WiFi.status() == WL_CONNECTED) {
