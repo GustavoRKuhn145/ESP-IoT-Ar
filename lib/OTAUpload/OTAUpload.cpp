@@ -1,7 +1,7 @@
-#include "OTACustom.h"
+#include "OTAUpload.h"
 #include "config.h"
 
-void OTAInit(const char* hostname) {
+void OTAUploadInit(const char* hostname) {
     // Inicialização do OTA
   ArduinoOTA.setHostname(hostname);
 

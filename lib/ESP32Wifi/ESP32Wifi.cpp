@@ -4,7 +4,7 @@
 void WifiInit()
 {
     WiFi.mode(WIFI_STA);
-    Serial.println("Iniciando Conexão WiFi");
+    Serial.println("\nIniciando Conexão WiFi");
     bool connected = false;
 
     for(int i = 0; i < NUM_NETWORKS && !connected; i++) {

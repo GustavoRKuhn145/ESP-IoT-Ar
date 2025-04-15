@@ -1,9 +1,13 @@
 #include <Arduino.h>
+#include <Blinkenlight.h>
 
 // Minha Bibliotecas
-#include "OTACustom.h"
+#include "OTAMonitor.h"
+#include "OTAUpload.h"
 #include "ESP32Wifi.h"
 #include "config.h"
+
+Blinkenlight led(BUILTIN_LED);
 
 void setup() {
 
@@ -11,19 +15,28 @@ void setup() {
 
   WifiInit();
 
-  OTAInit(OTA_HOSTNAME_AR);
+  OTAUploadInit(OTA_HOSTNAME_AR);
 
-  pinMode(LED_BUILTIN, OUTPUT);
+  OTAMonitorInit();
 
+  led.blink();
 }
 
 void loop() {
 
   ArduinoOTA.handle();
 
-  delay(500);
-  digitalWrite(LED_BUILTIN,HIGH);
-  delay(500);
-  digitalWrite(LED_BUILTIN,LOW);
-  
+  static unsigned long last_print_time = millis();
+
+  if ((unsigned long)(millis() - last_print_time) > 2000) {
+    WebSerial.print(F("IP address: "));
+    WebSerial.println(WiFi.localIP());
+    WebSerial.printf("Uptime: %lums\n", millis());
+    WebSerial.printf("Free heap: %u\n", ESP.getFreeHeap());
+    last_print_time = millis();
+  }
+
+  WebSerial.loop();
+
+  led.update();
 }
