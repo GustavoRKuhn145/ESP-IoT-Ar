@@ -1,11 +1,13 @@
-#include <Arduino.h>
-#include <Blinkenlight.h>
-
 // Minha Bibliotecas
 #include "OTAMonitor.h"
 #include "OTAUpload.h"
 #include "ESP32Wifi.h"
 #include "config.h"
+
+#include <Arduino.h>
+#include <Blinkenlight.h>
+#include <ArduinoOTA.h>
+#include <WebSerial.h>
 
 Blinkenlight led(BUILTIN_LED);
 

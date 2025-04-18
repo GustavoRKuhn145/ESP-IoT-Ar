@@ -1,6 +1,8 @@
 #include "ESP32Wifi.h"
 #include "config.h"
 
+#include <WiFi.h>
+
 void WifiInit()
 {
     WiFi.mode(WIFI_STA);

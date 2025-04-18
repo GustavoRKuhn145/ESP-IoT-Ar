@@ -1,5 +1,9 @@
 #include "OTAMonitor.h"
 
+#include <ESPAsyncWebServer.h>
+#include <AsyncTCP.h>
+#include <WebSerial.h>
+
 AsyncWebServer server(80);
 
 void OTAMonitorInit() {
