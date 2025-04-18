@@ -25,6 +25,8 @@ void setup() {
 void loop() {
 
   ArduinoOTA.handle();
+  WebSerial.loop();
+  led.update();
 
   static unsigned long last_print_time = millis();
 
@@ -36,7 +38,5 @@ void loop() {
     last_print_time = millis();
   }
 
-  WebSerial.loop();
 
-  led.update();
 }
