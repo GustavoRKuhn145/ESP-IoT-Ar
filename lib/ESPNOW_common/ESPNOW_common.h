@@ -5,10 +5,10 @@
 
 #include <esp_now.h>
 
-struct PowerDraw {
+typedef struct PowerDraw {
     int power;
     int current;
-};
+} PowerDraw;
 
 // Inicializa o protocolo espnow para o módulo do controle, verificando o canal do wifi
 // e enviando para o módulo do ar essas informações
@@ -26,8 +26,10 @@ void espNowArInit(bool doEncrypt=false);
 // do controle, geralmente apenas o canal do wifi
 void arOnDataRecv(const uint8_t *controleMac, const uint8_t *incomingData, int len);
 
-void setupPeer(uint8_t *peerMacAddress, int wifiChannel=0, bool doEncrypt=false);
+void setupPeer(const uint8_t *peerMacAddress, bool doEncrypt=false);
 
 void printMacAddress();
+
+int32_t getWiFiChannel(const char *ssids[]);
 
 #endif
