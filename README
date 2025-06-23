@@ -1,0 +1,7 @@
+# ESP-IoT-Ar
+
+## Objetivos
+
+- Monitorar o estado (ligado ou desligado) dos ares-condicionados
+- Desligar remotamente os aparelhos conectados por meio de sinais IR
+- Automatizar o desligamento, baseado em uma planilha de horários

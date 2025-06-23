@@ -1,14 +1,10 @@
 // Minha Bibliotecas
-#include "OTAMonitor.h"
-#include "OTAUpload.h"
 #include "ESP32Wifi.h"
 #include "ESPNOW_common.h"
 #include "config.h"
 
 #include <Arduino.h>
 #include <Blinkenlight.h>
-#include <ArduinoOTA.h>
-#include <WebSerial.h>
 #include <esp_wifi.h>
 
 Blinkenlight led(BUILTIN_LED);
@@ -19,10 +15,6 @@ void setup()
   Serial.begin(115200);
 
   WifiInit();
-
-  // OTAUploadInit(OTA_HOSTNAME_AR);
-
-  // OTAMonitorInit();
 
   espNowArInit(false);
 
