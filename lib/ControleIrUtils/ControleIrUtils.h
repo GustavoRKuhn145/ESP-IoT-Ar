@@ -10,13 +10,15 @@
 #include <IRremote.hpp>
 #include <stdint.h>
 
-
 // Struct para armazenar os dados de uma mensagem recebida
 struct storedIRDataStruct {
-    IRData receivedIRData; 
-    uint8_t rawCode[RAW_BUFFER_LENGTH]; // The durations if raw
+    decode_type_t protocol;
+    uint32_t address;
+    uint32_t command;
+    uint32_t extra; 
     uint8_t rawCodeLength; // The length of the code
-} sStoredIRData;
+    uint8_t rawCode[RAW_BUFFER_LENGTH]; // The durations if raw
+} dadosIr;
 
 void irInit();
 
