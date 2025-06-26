@@ -19,7 +19,7 @@ bool storeCode() {
     auto &data = IrReceiver.decodedIRData;
 
      if (data.flags & (IRDATA_FLAGS_IS_REPEAT | IRDATA_FLAGS_IS_AUTO_REPEAT | IRDATA_FLAGS_PARITY_FAILED | IRDATA_FLAGS_WAS_OVERFLOW)) {
-        Serial.println(F("Ignored repeat or error frame"));
+        Serial.println(F("Repetição ou erro ignorado"));
         return false;
     }
 
@@ -48,9 +48,9 @@ void sendCode(storedIRDataStruct *aIRDataToSend) {
         // Assume 38 KHz
         IrSender.sendRaw(aIRDataToSend->rawCode, aIRDataToSend->rawCodeLength, 38);
 
-        Serial.print(F("raw "));
+        Serial.print(F("Enviadas "));
         Serial.print(aIRDataToSend->rawCodeLength);
-        Serial.println(F(" marks or spaces"));
+        Serial.println(F(" marcações ou espaços"));
         return;
     } else {
         IRData dataToSend;

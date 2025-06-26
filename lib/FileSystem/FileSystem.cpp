@@ -3,7 +3,7 @@
 
 void fsInit() {
     if (!LittleFS.begin()) {
-        Serial.println(F("LittleFS mount failed!"));
+        Serial.println(F("Sistema de arquivos falhou ao iniciar!"));
         return;
     }
 }
@@ -14,6 +14,6 @@ bool saveIRDataToFile(const char* filename, storedIRDataStruct &entry) {
 
     file.write((uint8_t*)&entry, sizeof(entry));
     file.close();
-    Serial.println(F("IR entry saved"));
+    Serial.println(F("Comando IR salvo"));
     return true;
 }
