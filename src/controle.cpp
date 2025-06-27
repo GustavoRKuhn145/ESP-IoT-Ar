@@ -22,18 +22,19 @@ void setup() {
 }
 
 unsigned long currentMillis = millis();
-unsigned long waitStart = 0;
-int mode = 0; // 0 = modo normal: monitora o consumo; 1 = modo de envio: envia o comando de desligar; 2 = modo de cadastro: ativa o protocolo de cadastro
-String irCommand;
+IRCommandData irCommand;
 
 void loop() {
-  switch (mode) {
+  currentMillis = millis();
+  static int mode = 0; // 0 = modo normal: monitora o consumo; 1 = modo de envio: envia o comando de desligar; 2 = modo de cadastro: ativa o protocolo de cadastro
+  static unsigned long waitStart = 0;
+  switch (mode) { 
 
     case 0: // modo normal de operação
       // TODO: recebe e processar os dados do ESP-AR
       // TODO: espera o comando para trocar de modo adicionar waitStart = currentMillis;
       if(readIRCommand(irCommand)) {
-        if (saveIRDataToFile("/ir_codes.bin", irCommand)) {
+        if (saveIRDataToFile("/ir_codes.bin", irCommand.toStringForFS())) {
           Serial.println(F("Código Salvo"));
           mode = 1;
           waitStart = currentMillis;
@@ -51,7 +52,6 @@ void loop() {
         delay(1000);
       } else {
         mode = 0;
-        break;
       }
       break;
     
