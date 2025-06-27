@@ -3,7 +3,7 @@
 
 #include <WiFi.h>
 
-#define WIFI_TIMEOUT_MS 5000
+#define WIFI_TIMEOUT_MS 10000
 
 extern WiFiClient* client;
 
