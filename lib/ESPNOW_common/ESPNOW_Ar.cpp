@@ -6,22 +6,10 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 
-bool didReceiveChannel = false;
-int receivedChannel = 1;
-
 // --------------------------------------------- //
 
 // --- Funções do módulo ar -------------------- //
 
-void arOnDataRecv(const uint8_t *controleMac, const uint8_t *incomingData, int len)
-{
-    if (len == 1)
-    {
-        receivedChannel = incomingData[0];
-        didReceiveChannel = true;
-        Serial.printf("Canal wifi recebido: %d\n", receivedChannel);
-    }
-}
 
 void espNowArInit(bool doEncrypt)
 {
@@ -33,8 +21,6 @@ void espNowArInit(bool doEncrypt)
         Serial.println("ESP-NOW falhou inicialização");
         return;
     }
-
-    esp_now_register_recv_cb(arOnDataRecv);
 
     setupPeer(controleMac, doEncrypt);
 
