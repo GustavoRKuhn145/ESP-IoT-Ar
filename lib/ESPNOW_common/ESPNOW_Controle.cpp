@@ -1,5 +1,6 @@
 #include "ESPNOW_common.h"
 #include "config.h"
+#include "CurrentRead.h"
 
 #include <esp_now.h>
 #include <HardwareSerial.h>
@@ -11,11 +12,11 @@
 void controleOnDataRecv(const uint8_t *arMac, const uint8_t *incomingData, int len)
 {
     Serial.print("Recebi algo: ");
-    if (len == sizeof(PowerDraw))
+    if (len == sizeof(PowerData))
     {
-        PowerDraw data;
-        memcpy(&data, incomingData, sizeof(PowerDraw));
-        Serial.printf("Potência: %dW, Current: %dmA\n", data.power, data.current);
+        PowerData data;
+        memcpy(&data, incomingData, sizeof(PowerData));
+        Serial.printf("Leitura de Corrente: %dmA, Tempo desde última leitura: %dmS\n", data.currentReading, data.timeSinceLastRead_ms);
 
         // TODO: enviar para influxDB aqui
     }

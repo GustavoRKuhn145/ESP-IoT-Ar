@@ -5,11 +5,6 @@
 
 #include <esp_now.h>
 
-typedef struct PowerDraw {
-    int power;
-    int current;
-} PowerDraw;
-
 // Inicializa o protocolo espnow para o módulo do controle, verificando o canal do wifi
 // e enviando para o módulo do ar essas informações
 void espNowControleInit(bool doEncrypt=false);

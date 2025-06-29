@@ -2,12 +2,15 @@
 #include "ESP32Wifi.h"
 #include "ESPNOW_common.h"
 #include "config.h"
+#include "CurrentRead.h"
 
 #include <Arduino.h>
 #include <Blinkenlight.h>
 #include <esp_wifi.h>
 
 Blinkenlight led(BUILTIN_LED);
+
+static unsigned long lastSent = 0;
 
 void setup()
 {
@@ -25,23 +28,22 @@ void setup()
 }
 
 void loop()
-{
+{ 
 
-  // ArduinoOTA.handle();
-  // WebSerial.loop();
-  // led.update();
-
-  // Example fake data, replace with ACS712 read
   unsigned long currentMillis = millis();
-  static unsigned long lastSent = 0;
 
   if (currentMillis - lastSent >= 5000)
   {
-    lastSent = currentMillis;
+    
+    powerData.currentReading = getCurrentReading();
 
-    PowerDraw data = {random(100, 500), random(100, 500)};
-    esp_err_t result = esp_now_send(controleMac, (uint8_t *)&data, sizeof(data));
+    powerData.timestamp_ms = currentMillis;
+    
+    powerData.timeSinceLastRead_ms = currentMillis - lastSent;
+    lastSent = currentMillis;
+    
+
+    esp_err_t result = esp_now_send(controleMac, (uint8_t *)&powerData, sizeof(powerData));
     Serial.println(result == ESP_OK ? "Sent queued" : "Send error");
   }
-
 }
