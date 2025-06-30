@@ -11,6 +11,8 @@ decode_results results;
 void irInit()
 {
     irrecv.enableIRIn();
+    irrecv.setUnknownThreshold(12);
+
     irsend.begin();
 }
 
@@ -24,10 +26,11 @@ String IRCommandData::getProtocolString() const {
         case PANASONIC: return "PANASONIC";
         case JVC: return "JVC";
         case SAMSUNG: return "SAMSUNG";
-        case RAW: return "RAW"; // This means it was only decoded as raw
+        case DENON: return "DENON";
+        case PRONTO: return "PRONTO"; // Treat as raw for now
         case UNKNOWN: return "UNKNOWN";
-        // Add more cases for other protocols you care about
-        default: return "UNKNOWN_PROTOCOL";
+        case RAW: return "RAW"; // Explicit raw capture
+        default: return "UNHANDLED_PROTOCOL_TYPE";
     }
 }
 
@@ -43,6 +46,16 @@ String IRCommandData::toStringForFS() const {
     data += String(bits);
     data += ",";
     data += String(repeat ? "true" : "false");
+    data += ",";
+
+ // Append rawData as space-separated values
+    data += String(rawDataLen); // First, store the length of the raw data
+    for (uint16_t i = 0; i < rawDataLen; ++i) {
+        data += " "; // Space as delimiter between raw numbers
+        data += String(rawData[i]);
+    }
+    return data;
+
     return data;
 }
 
@@ -57,6 +70,7 @@ IRCommandData IRCommandData::fromStringForFS(const String& dataString) {
     cmd.address = 0;
     cmd.command = 0;
     cmd.repeat = false;
+    cmd.rawDataLen = 0;
 
     // Parse the string: timestamp,protocol,hex_value,bits,address,command,repeat_flag
     int lastPos = 0;
@@ -116,6 +130,51 @@ IRCommandData IRCommandData::fromStringForFS(const String& dataString) {
     repeatStr.trim(); // Important to remove newline character if present
     cmd.repeat = (repeatStr == "true");
 
+    // 8. rawDataLen and rawData (remaining part of the string)
+    String rawDataSection = dataString.substring(lastPos);
+    rawDataSection.trim();
+
+    if (rawDataSection.isEmpty()) {
+        cmd.rawDataLen = 0;
+    } else {
+        int firstSpace = rawDataSection.indexOf(' ');
+        if (firstSpace == -1) {
+            cmd.rawDataLen = rawDataSection.toInt();
+            if (cmd.rawDataLen > 0) {
+                Serial.println("Warning: Raw data length specified, but no raw values found.");
+                cmd.rawDataLen = 0;
+            }
+        } else {
+            cmd.rawDataLen = rawDataSection.substring(0, firstSpace).toInt();
+            String rawValuesStr = rawDataSection.substring(firstSpace + 1);
+
+            int currentValStart = 0;
+            int nextSpace;
+            uint16_t count = 0;
+
+            while (count < cmd.rawDataLen && currentValStart < rawValuesStr.length()) {
+                nextSpace = rawValuesStr.indexOf(' ', currentValStart);
+                String valStr;
+                if (nextSpace == -1) {
+                    valStr = rawValuesStr.substring(currentValStart);
+                } else {
+                    valStr = rawValuesStr.substring(currentValStart, nextSpace);
+                }
+                valStr.trim();
+
+                if (!valStr.isEmpty()) {
+                    cmd.rawData[count++] = valStr.toInt();
+                }
+
+                if (nextSpace == -1) {
+                    break;
+                }
+                currentValStart = nextSpace + 1;
+            }
+            cmd.rawDataLen = count;
+        }
+    }
+    cmd.rawDataLen = min(cmd.rawDataLen, MAX_RAW_LEN);
     return cmd;
 }
 
@@ -130,6 +189,20 @@ bool readIRCommand(IRCommandData &commandData) {
         commandData.command = results.command;
         commandData.repeat = results.repeat;
 
+        // Copy raw data if available and fits
+        if (results.rawlen > 0 && results.rawbuf != NULL) {
+            commandData.rawDataLen = min(results.rawlen, MAX_RAW_LEN);
+            Serial.print("DEBUG: Copying ");
+            Serial.print(commandData.rawDataLen);
+            Serial.println(" raw data entries.");
+            for (uint16_t i = 0; i < commandData.rawDataLen; ++i) {
+                commandData.rawData[i] = results.rawbuf[i];
+            }
+        } else {
+            commandData.rawDataLen = 0;
+            Serial.println("DEBUG: results.rawlen was 0 or results.rawbuf was NULL. rawDataLen set to 0.");
+        }
+
         Serial.print("IR Code Received: Protocol=");
         Serial.print(commandData.getProtocolString());
         Serial.print(", Value=");
@@ -139,6 +212,8 @@ bool readIRCommand(IRCommandData &commandData) {
         Serial.print(commandData.bits);
         Serial.print(", Repeat=");
         Serial.println(commandData.repeat ? "true" : "false");
+        Serial.print(", RawLen=");
+        Serial.println(commandData.rawDataLen);
 
         irrecv.resume();
         return true;
@@ -155,6 +230,11 @@ Serial.print("Attempting to send IR code: Protocol=");
     Serial.print(", Bits=");
     Serial.print(commandData.bits);
     Serial.println(".");
+    Serial.print(", RawLen=");
+    Serial.print(commandData.rawDataLen);
+    Serial.println(".");
+
+    const uint16_t kDefaultIrFrequency = 38; // kHz
 
     // Use a switch statement to call the correct send function based on protocol
     switch (commandData.decode_type) { // Use decode_type here
@@ -183,20 +263,22 @@ Serial.print("Attempting to send IR code: Protocol=");
         case DENON:
              irsend.sendDenon(commandData.value, commandData.bits, commandData.repeat);
              break;
-        case PRONTO:
-             // Pronto codes are typically raw, requiring a different approach.
-             // You'd need to store the rawData array and its length for this.
-             Serial.println("Warning: PRONTO protocol detected. Requires raw data for re-sending.");
-             break;
-        case RAW:
-            // If you stored raw data (rawbuf, rawlen), you'd use irsend.sendRaw() here.
-            Serial.println("Warning: RAW protocol detected. Cannot re-send without raw buffer data.");
-            break;
-        case UNKNOWN:
-            Serial.println("Warning: UNKNOWN protocol. Cannot re-send.");
-            break;
         default:
-            Serial.println("Error: Unhandled protocol for sending.");
+            if (commandData.rawDataLen > 0) {
+                // The `rawData` stores durations in half-microseconds.
+                // irsend.sendRaw() expects microseconds.
+                // The library's `decode` function populates `rawbuf` with ticks (half-microseconds).
+                // So, we need to convert them back to microseconds for `sendRaw` if the
+                // `IRutils.cpp` `resultToRawArray` function isn't used (which does this conversion).
+                // However, `results.rawbuf` *already contains ticks*, so `sendRaw` expects ticks too.
+                // Let's verify this, as this is a common point of confusion.
+                // According to IRremoteESP8266 documentation, `sendRaw` expects ticks (half-microseconds)
+                // in the array if you directly pass `results.rawbuf`.
+                irsend.sendRaw(commandData.rawData, commandData.rawDataLen, kDefaultIrFrequency);
+                Serial.println("Sent as RAW data.");
+            } else {
+                Serial.println("Warning: Cannot send RAW/UNKNOWN/PRONTO; raw data not available or empty.");
+            }
             break;
     }
 }

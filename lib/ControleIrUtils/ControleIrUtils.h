@@ -16,6 +16,8 @@ extern IRrecv irrecv;
 extern IRsend irsend;
 extern decode_results results;
 
+const uint16_t MAX_RAW_LEN = 500;
+
 struct IRCommandData {
     unsigned long long timestamp; // Millis() or NTP timestamp
     decode_type_t decode_type;       // Enum from IRremoteESP8266
@@ -24,9 +26,8 @@ struct IRCommandData {
     uint32_t address;             // For protocols with address (e.g., NEC)
     uint32_t command;             // For protocols with command (e.g., NEC)
     bool repeat;                  // Is it a repeat code?
-    // Could also include raw data here, but it's complex for LittleFS
-    // uint16_t *rawbuf;
-    // uint16_t rawlen;
+    uint16_t rawData[MAX_RAW_LEN];
+    uint16_t rawDataLen;
 
     // Helper to convert protocol enum to string
     String getProtocolString() const;

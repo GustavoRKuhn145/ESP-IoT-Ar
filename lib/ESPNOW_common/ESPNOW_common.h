@@ -2,8 +2,13 @@
 #define ESPNOW_COM_H
 
 #include "config.h"
+#include "CurrentRead.h"
 
 #include <esp_now.h>
+
+extern bool isDataReceived;
+
+extern PowerData receivedData;
 
 // Inicializa o protocolo espnow para o módulo do controle, verificando o canal do wifi
 // e enviando para o módulo do ar essas informações
