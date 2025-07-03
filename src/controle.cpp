@@ -5,6 +5,7 @@
 #include "pins.h"
 #include "FileSystem.h"
 #include "DBUtils.h"
+#include "MqttUtils.h"
 
 #include <Arduino.h>
 
@@ -19,6 +20,8 @@ void setup() {
     WifiInit();
     
     DBInit();
+
+    mqttConnect();
 
     espNowControleInit(false);
 
@@ -37,7 +40,12 @@ static int mode = 0; // 0 = modo normal: monitora o consumo; 1 = modo de envio: 
 static unsigned long waitStart = 0;
 
 void loop() {
+
   currentMillis = millis();
+
+  mqttLoop();
+
+  // Loop principal de operação
   switch (mode) { 
 
     case 0: // modo normal de operação
@@ -46,7 +54,7 @@ void loop() {
         sendPowerDataToInflux(receivedData);
         isDataReceived = false;
       }
-      // TODO: espera o comando para trocar de modo adicionar waitStart = currentMillis;
+      // TODO: espera o comando mqtt para trocar para o modo de desligar ou cadastrar
 
       break;
     
@@ -63,10 +71,13 @@ void loop() {
           if (saveIRDataToFile("/ir_codes.bin", irCommand.toStringForFS())) {
             Serial.println(F("Código Salvo"));
             lastIrReceiveTime = currentMillis;
+            mode = 0;
           } else {
             Serial.println(F("Falha ao salvar o código"));
           }
-          break;
+        }
+        else {
+          Serial.println("Nenhuma leitura de código em 5s, retornando ao modo normal");
         }
       }
       break;

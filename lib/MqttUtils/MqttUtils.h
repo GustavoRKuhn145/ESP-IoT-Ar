@@ -4,6 +4,8 @@
 #include "ESP32Wifi.h"
 #include <PubSubClient.h>
 
+const char* modeTopic = "sala219/mode";
+
 PubSubClient mqttClient(*client);
 
 void mqttConnect();
