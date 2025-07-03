@@ -23,7 +23,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
         } else if (message == "cadastrar") {
             mode = 2; // Mudar para o modo de cadastro
             waitStart = millis(); // Start the 5s timer for mode 2
-            Serial.println("Modo mudado para 2 (Cadastrar comando IR)");
+            Serial.println("Modo mudado para 2 (Ca'dastrar comando IR)");
         } else if (message == "normal") {
             mode = 0; // Change to normal mode
             Serial.println("Modo mudado para 0 (Normal)");
