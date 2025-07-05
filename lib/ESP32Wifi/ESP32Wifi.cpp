@@ -1,7 +1,7 @@
 #include "ESP32Wifi.h"
 #include "config.h"
 
-#include <WiFi.h>
+WiFiClient client;
 
 void WifiInit()
 {

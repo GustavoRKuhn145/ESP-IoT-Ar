@@ -1,14 +1,17 @@
 #ifndef MQTT_UTILS_H
 #define MQTT_UTILS_H
 
-#include "ESP32Wifi.h"
+#include "globals.h"
+
 #include <PubSubClient.h>
 
-const char* modeTopic = "sala219/mode";
+static const char* modeTopic = "sala219/mode";
 
-PubSubClient mqttClient(*client);
+extern PubSubClient mqttClient;
 
-void mqttConnect();
+void mqttInit();
+
+void mqttReconnect();
 
 void mqttLoop();
 

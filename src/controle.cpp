@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 #include "DBUtils.h"
 #include "MqttUtils.h"
+#include "globals.h"
 
 #include <Arduino.h>
 
@@ -21,7 +22,7 @@ void setup() {
     
     DBInit();
 
-    mqttConnect();
+    mqttInit();
 
     espNowControleInit(false);
 
@@ -36,8 +37,8 @@ IRCommandData irCommand;
 bool isDataReceived = false;
 unsigned long currentMillis = millis();
 
-static int mode = 0; // 0 = modo normal: monitora o consumo; 1 = modo de envio: envia o comando de desligar; 2 = modo de cadastro: ativa o protocolo de cadastro
-static unsigned long waitStart = 0;
+int mode = 0; // 0 = modo normal: monitora o consumo; 1 = modo de envio: envia o comando de desligar; 2 = modo de cadastro: ativa o protocolo de cadastro
+unsigned long waitStart = 0;
 
 void loop() {
 
@@ -66,6 +67,7 @@ void loop() {
       break;
     
     case 2: // Espera o comando novo por 5s
+      currentMillis = millis();
       if (currentMillis - waitStart < 5000) {
         if(readIRCommand(irCommand)) {
           if (saveIRDataToFile("/ir_codes.bin", irCommand.toStringForFS())) {
@@ -74,11 +76,14 @@ void loop() {
             mode = 0;
           } else {
             Serial.println(F("Falha ao salvar o código"));
-          }
+          } 
         }
-        else {
+      } else {
           Serial.println("Nenhuma leitura de código em 5s, retornando ao modo normal");
-        }
+          Serial.println(currentMillis);
+          Serial.println(waitStart);
+          Serial.println(currentMillis - waitStart);
+          mode = 0;
       }
       break;
 
