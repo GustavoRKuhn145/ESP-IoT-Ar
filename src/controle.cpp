@@ -9,6 +9,7 @@
 #include "globals.h"
 
 #include <Arduino.h>
+#include <IRutils.h>
 
 #define IR_DEBOUCE_MS 300
 unsigned long lastIrReceiveTime = 0;
@@ -31,9 +32,7 @@ void setup() {
     irInit();
 
 }
-
 PowerData receivedData;
-IRCommandData irCommand;
 bool isDataReceived = false;
 unsigned long currentMillis = millis();
 
@@ -50,6 +49,32 @@ void loop() {
   switch (mode) { 
 
     case 0: // modo normal de operação
+
+
+    if (Serial.available()) {
+      String commandLine = Serial.readStringUntil('\n');
+      commandLine.trim(); // Remove leading/trailing whitespace
+
+      if (commandLine.equalsIgnoreCase("list")) {
+        listIRCommands();
+      } else if (commandLine.startsWith("delete ")) {
+        // Extract the index from the command
+        String indexStr = commandLine.substring(7); // "delete " is 7 characters
+        int indexToDelete = indexStr.toInt();
+        if (indexStr.length() > 0 && indexToDelete >= 0) { // Basic validation
+          deleteIRCommand(indexToDelete);
+        } else {
+          Serial.println("Invalid 'delete' command. Usage: 'delete <index>' (e.g., 'delete 0')");
+        }
+      } else if (commandLine.equalsIgnoreCase("clear")) {
+        clearIRCommands();
+      } else {
+        Serial.println("Unknown command. Type 'record', 'play', 'list', 'delete <index>', or 'clear'.");
+      }
+    }
+
+
+
       // recebe e processar os dados do ESP-AR: funcionalidade feita pelo ESP-NOW
       if (isDataReceived) {
         sendPowerDataToInflux(receivedData);
@@ -59,34 +84,37 @@ void loop() {
 
       break;
     
-    case 1: // modo de envio de sinal de desligar
+    case 1: // modo de desligamento
       //TODO: deligar todos os ares
-      sendIRCommand(irCommand);
+      sendIRSignal();
       Serial.println("código enviado");
       mode = 0;
       break;
     
-    case 2: // Espera o comando novo por 5s
+    case 2: // modo de cadastro
       currentMillis = millis();
       if (currentMillis - waitStart < 5000) {
-        if(readIRCommand(irCommand)) {
-          if (saveIRDataToFile("/ir_codes.bin", irCommand.toStringForFS())) {
-            Serial.println(F("Código Salvo"));
-            lastIrReceiveTime = currentMillis;
-            mode = 0;
-          } else {
-            Serial.println(F("Falha ao salvar o código"));
-          } 
+        if(irrecv.decode(&results)) {
+          Serial.print("Código IR Recebido! Tipo: ");
+          Serial.println(typeToString(results.decode_type)); // Print decoded type
+
+          // Save the received signal
+          saveIRSignal(&results);
+
+          // Resume receiving IR signals
+          irrecv.resume();
+          mode = 0;
+          Serial.println("Código IR gravado.");
         }
       } else {
           Serial.println("Nenhuma leitura de código em 5s, retornando ao modo normal");
-          Serial.println(currentMillis);
-          Serial.println(waitStart);
-          Serial.println(currentMillis - waitStart);
           mode = 0;
       }
       break;
 
     // TODO: case 4: broadcast de endereço MAC para parear novos ESP-AR
   }
+
+  
+
 }
